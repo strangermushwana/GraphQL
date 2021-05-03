@@ -4,7 +4,7 @@ import uuidv4 from 'uuid/v4'
 //Scaler types - String, Booliean, Int, Float, ID
 
 // Demo user data
-const users = [
+let users = [
   {
     id: '1',
     name: 'John',
@@ -24,7 +24,7 @@ const users = [
   },
 ]
 
-const posts = [
+let posts = [
   {
     id: '10',
     title: 'The art of war',
@@ -48,7 +48,7 @@ const posts = [
   },
 ]
 
-const comments = [
+let comments = [
   {
     id: '14',
     text: 'This is the fist comment',
@@ -65,7 +65,7 @@ const comments = [
     id: '16',
     text: 'I came to speak with you again',
     author: '3',
-    post: '30',
+    post: '10',
   },
   {
     id: '17',
@@ -86,9 +86,31 @@ const typeDefs = `
   }
 
   type Mutation {
-    createUser(name: String!, email: String!, age: Int): User!
-    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-    createComment(text: String!, author: ID!, post: ID!) : Comment!
+    createUser(data: CreateUserInput): User!
+    deleteUser(id: ID!): User!
+    createPost(data: CreatePostInput): Post!
+    deletePost(id: ID!): Post!
+    createComment(data: CreateCommentInput) : Comment!
+    deleteComment(id: ID!): Comment!
+  }
+
+  input CreateUserInput {
+    name: String!
+    email: String!
+    age: Int
+  }
+
+  input CreatePostInput {
+    title: String!
+    body: String!
+    published: Boolean!
+    author: ID!
+  }
+
+  input CreateCommentInput {
+    text: String!
+    author: ID!
+    post: ID!
   }
 
   type Comment {
@@ -169,7 +191,7 @@ const resolvers = {
   Mutation: {
     createUser(parent, args, ctx, info) {
       const emailTaken = users.some((user) => {
-        return user.email === args.email
+        return user.email === args.data.email
       })
 
       if (emailTaken) {
@@ -178,18 +200,44 @@ const resolvers = {
 
       const user = {
         id: uuidv4.v4(),
-        name: args.name,
-        email: args.email,
-        age: args.age,
+        ...args.data,
       }
 
       users.push(user)
       return user
     },
 
+    deleteUser(parent, args, ctx, info) {
+      const userIndex = users.findIndex((user) => {
+        return user.id === args.id
+      })
+
+      if (userIndex === -1) {
+        throw new Error('User not found')
+      }
+
+      const deletedUser = users.splice(userIndex, 1)
+      posts = posts.filter((post) => {
+        const match = post.author === args.id
+        if (match) {
+          comments = comments.filter((comment) => {
+            return comment.post !== post.id
+          })
+        }
+
+        return !match
+      })
+
+      comments = comments.filter((comment) => {
+        return comment.author !== args.id
+      })
+
+      return deletedUser[0]
+    },
+
     createPost(parent, args, ctx, info) {
       const userExists = users.some((user) => {
-        return user.id === args.author
+        return user.id === args.data.author
       })
 
       if (!userExists) {
@@ -198,23 +246,35 @@ const resolvers = {
 
       const post = {
         id: uuidv4.v4(),
-        title: args.title,
-        body: args.body,
-        published: args.published,
-        author: args.author,
+        ...args.data,
       }
 
       posts.push(post)
       return post
     },
 
+    deletePost(parent, args, ctx, info) {
+      const postIndex = posts.findIndex((post) => {
+        return post.id === args.id
+      })
+
+      if (postIndex === -1) {
+        throw new Error('Post not found')
+      }
+
+      const deletedPost = posts.splice(postIndex, 1)
+      comments = comments.filter((comment) => comment.post !== args.id)
+
+      return deletedPost[0]
+    },
+
     createComment(parent, args, ctx, info) {
       const userExists = users.some((user) => {
-        return user.id === args.author
+        return user.id === args.data.author
       })
 
       const postExists = posts.some((post) => {
-        return post.id === args.post && post.published
+        return post.id === args.data.post && post.published
       })
 
       if (!userExists || !postExists) {
@@ -223,13 +283,22 @@ const resolvers = {
 
       const comment = {
         id: uuidv4.v4(),
-        text: args.text,
-        author: args.author,
-        post: args.post,
+        ...args.data,
       }
 
       comments.push(comment)
       return comment
+    },
+
+    deleteComment(parent, args, ctx, info) {
+      const commentIndex = comments.findIndex((comment) => {
+        return comment.id === args.id
+      })
+      if (commentIndex === -1) {
+        throw new Error('Comment not found')
+      }
+      const deletedComment = comments.splice(commentIndex, 1)
+      return deletedComment[0]
     },
   },
 
