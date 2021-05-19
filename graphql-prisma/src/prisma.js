@@ -1,9 +1,11 @@
 import { Prisma } from 'prisma-binding'
+import { fragmentReplacements } from './resolvers/index'
 
 const prisma = new Prisma({
-    typeDefs: 'src/generated/prisma.graphql',
-    endpoint: 'http://localhost:4466',
-    secret: 'thisistheasuperamazingsecret'
+  typeDefs: 'src/generated/prisma.graphql',
+  endpoint: 'http://localhost:4466',
+  secret: 'thisistheasuperamazingsecret',
+  fragmentReplacements,
 })
 
 export { prisma as default }
@@ -16,7 +18,7 @@ export { prisma as default }
 //     }
 
 //     const post = await prisma.mutation.createPost({
-//         data: { 
+//         data: {
 //             ...data,
 //             author: {
 //                 connect: {
