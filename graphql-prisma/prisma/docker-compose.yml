@@ -4,7 +4,7 @@ services:
     image: prismagraphql/prisma:1.12
     restart: always
     ports:
-      - '4466:4466'
+    - "4466:4466"
     environment:
       PRISMA_CONFIG: |
         port: 4466
@@ -13,10 +13,10 @@ services:
         databases:
           default:
             connector: postgres
-            host: ec2-18-214-140-149.compute-1.amazonaws.com
+            host: host.docker.internal
             port: '5432'
-            database: d11lc86luovbsm
-            ssl: true
-            user: svfnysonbihote
-            password: 4797124dc524d66c6f700a64e5b8417ce122e2d711cc38ce9bd5368d6bd82e04
+            database: localtest
+            ssl: false
+            user: Stranger
+            password: 
             migrations: true
